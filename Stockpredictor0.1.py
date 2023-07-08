@@ -7,7 +7,35 @@ from prophet import Prophet
 from prophet.plot import plot_plotly
 from plotly import graph_objs as go
 
-START = "2021-01-01"
+footer="""<style>
+a:link , a:visited{
+color: blue;
+background-color: transparent;
+text-decoration: underline;
+}
+
+a:hover,  a:active {
+color: red;
+background-color: transparent;
+text-decoration: underline;
+}
+
+.footer {
+position: fixed;
+left: 0;
+bottom: 0;
+width: 100%;
+background-color: white;
+color: black;
+text-align: center;
+}
+</style>
+<div class="footer">
+<p>Coded by Pranav, Ideas by Emil <a style='display: block; text-align: center;' </a></p>
+</div>
+"""
+st.markdown(footer,unsafe_allow_html=True)
+START = "2022-01-01"
 TODAY = date.today().strftime("%Y-%m-%d")
 
 st.title('Stock Market Predictor')
@@ -44,8 +72,8 @@ def plot_raw_data():
 plot_raw_data()
 
 # Predict forecast with Prophet.
-df_train = data[['Date','Close']]
-df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
+df_train = data[['Date','Open']]
+df_train = df_train.rename(columns={"Date": "ds", "Open": "y"})
 
 m = Prophet()
 m.fit(df_train)
