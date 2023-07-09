@@ -33,7 +33,7 @@ if selected_stock:
     st.write(data.tail())
 
     # Apply exponential smoothing to the data
-    smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 1.0, 0.9, 0.05)
+    smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
 
     # Convert 'Date' column to datetime format
     data['Date'] = pd.to_datetime(data['Date'])
