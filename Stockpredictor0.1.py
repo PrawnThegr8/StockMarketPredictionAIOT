@@ -1,99 +1,95 @@
 # pip install streamlit fbprophet yfinance plotly
 import streamlit as st
 from datetime import date
-from prophet import *
 import yfinance as yf
 from prophet import Prophet
 from prophet.plot import plot_plotly
-from plotly import graph_objs as go
+import plotly.graph_objs as go
+import pandas as pd
 
-footer="""<style>
-a:link , a:visited{
-color: blue;
-background-color: transparent;
-text-decoration: underline;
-}
-
-a:hover,  a:active {
-color: red;
-background-color: transparent;
-text-decoration: underline;
-}
-
+footer = """
+<style>
 .footer {
-position: fixed;
-left: 0;
-bottom: 0;
-width: 100%;
-background-color: white;
-color: black;
-text-align: center;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+    color: black;
+    text-align: center;
 }
 </style>
 <div class="footer">
-<p>Coded by Pranav, Ideas by Emil <a style='display: block; text-align: center;' </a></p>
+    <p>Coded by Pranav, Ideas by Emil</p>
 </div>
 """
-st.markdown(footer,unsafe_allow_html=True)
-START = "2021-06-01"
+st.markdown(footer, unsafe_allow_html=True)
+
+START = "2021-01-01"
 TODAY = date.today().strftime("%Y-%m-%d")
 
 st.title('Stock Market Predictor')
 
 stocks = ('GOOG', 'AAPL', 'MSFT', 'GME', 'AMZN', 'RELIANCE.NS')
-selected_stock = st.text_input('Type in the stock ticker for prediction', )
+selected_stock = st.text_input('Select a stock ticker for prediction')
 
-n_years = st.slider('how many years:', 1, 4)
+n_years = st.slider('How many years into the future?', 1, 4)
 period = n_years * 365
 
-
-@st.cache
+@st.cache_data
 
 def load_data(ticker):
-    if selected_stock:
+    if selected_stock:  
         data = yf.download(ticker, START, TODAY)
         data.reset_index(inplace=True)
+        
         return data
-
-	
-data_load_state = st.text('Loading data...')
-data = load_data(selected_stock)
-data_load_state.text('Loading data... done!')
-
-st.subheader('Raw data')
 if selected_stock:
+    data_load_state = st.text('Loading data...')
+    data = load_data(selected_stock)
+
+    data_load_state.text('Loading data... done!')
+    
+    st.subheader('Raw data')
     st.write(data.tail())
 
-# Plot raw data
+# Apply rolling average and interpolation to the data
+rolling_window = st.slider('Rolling average of data', 1, 30)
+if selected_stock:
+    data['Close_rolling'] = data['Close'].rolling(rolling_window, min_periods=1).mean()
+    data['Close_rolling'] = data['Close_rolling'].interpolate(method='linear')
+    
+# Plot raw data with rolling average
 def plot_raw_data():
     if selected_stock:
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name="stock_open"))
-        fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name="stock_close"))
-        fig.layout.update(title_text='Time Series data with Rangeslider', xaxis_rangeslider_visible=True)
+        fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name="Stock Open"))
+        fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name="Stock Close"))
+        fig.add_trace(go.Scatter(x=data['Date'], y=data['Close_rolling'], name=f"Close ({rolling_window}D Rolling Avg)"))
+        fig.layout.update(title_text='Time Series Data', xaxis_rangeslider_visible=True)
         st.plotly_chart(fig)
-	
-plot_raw_data()
-
-# Predict forecast with Prophet.
 if selected_stock:
-    df_train = data[['Date','Close' ]]
-    df_train = df_train.rename(columns={"Date": "ds","Close": "y" })
+    plot_raw_data()
 
-    m = Prophet()
+# Predict forecast with Prophet
+if selected_stock:
+    df_train = data[['Date', 'Close_rolling']].rename(columns={"Date": "ds", "Close_rolling": "y"})
+
+    m = Prophet(changepoint_prior_scale=0.05)
     m.fit(df_train)
-    future = m.make_future_dataframe(periods=period)
+
+    future = m.make_future_dataframe(periods=period, freq='D')
     forecast = m.predict(future)
 
 # Show and plot forecast
-st.subheader('Forecast data')
-if selected_stock:
+    st.subheader('Forecast data')
     st.write(forecast.tail())
-    
-    st.write(f'Forecast plot for {n_years} years')
+
+    st.subheader(f'Forecast Plot for {n_years} Years')
     fig1 = plot_plotly(m, forecast)
+    fig1.update_layout(yaxis=dict(tickformat=".2f"))
     st.plotly_chart(fig1)
 
-    st.write("Forecast components")
+    st.subheader('Forecast Components')
     fig2 = m.plot_components(forecast)
     st.write(fig2)
