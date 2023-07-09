@@ -28,55 +28,69 @@ if selected_stock:
     data_load_state = st.text('Loading data...')
     data = load_data(selected_stock)
     data_load_state.text('Loading data... done!')
+    
+    st.subheader('Raw data')
+    st.write(data.tail())
 
     # Apply exponential smoothing to the data
-    smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
+    smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 1.0, 0.9, 0.05)
 
-# Convert 'Date' column to datetime format
+    # Convert 'Date' column to datetime format
     data['Date'] = pd.to_datetime(data['Date'])
 
-# Set 'Date' column as index
+    # Set 'Date' column as index
     data.set_index('Date', inplace=True)
 
-# Resample the data to daily frequency
+    # Resample the data to daily frequency
     daily_data = data.resample('D').interpolate()
 
-# Apply exponential smoothing to the data
+    # Apply exponential smoothing to the data
     daily_data['Close_rolling'] = daily_data['Close'].ewm(alpha=1 - smoothing_factor).mean()
 
-# Plot raw data with exponential smoothing
-def plot_raw_data():
-    if selected_stock:
+    # Plot raw data with exponential smoothing
+    def plot_raw_data():
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Open'], name="Stock Open"))
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close'], name="Stock Close"))
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close_rolling'], name="Close (Exponential Smoothing)"))
-        fig.layout.update(title_text='Time Series Data', xaxis_rangeslider_visible=True)
+        fig.update_layout(
+            title_text='Time Series Data',
+            xaxis_rangeslider_visible=True,
+            height=600,  # Set the desired height for the raw data plot
+            width=900  # Set the desired width for the raw data plot
+        )
         st.plotly_chart(fig)
-if selected_stock:
+
     plot_raw_data()
 
-# Predict forecast with Prophet
+    # Predict forecast with Prophet
     df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
 
-    m = Prophet(changepoint_prior_scale=0.90)  # Adjust the value as needed
+    m = Prophet(changepoint_prior_scale=0.1)  # Adjust the value as needed
     m.fit(df_train)
 
     future = m.make_future_dataframe(periods=period, freq='D')
     forecast = m.predict(future)
 
-# Show and plot forecast
+    # Show and plot forecast
     st.subheader('Forecast data')
     st.write(forecast.tail())
 
     st.subheader(f'Forecast Plot for {n_years} Years')
     fig1 = plot_plotly(m, forecast)
-    fig1.update_layout(yaxis=dict(tickformat=".2f"))
-    st.plotly_chart(fig1)
 
-    st.subheader('Forecast Components')
-    fig2 = m.plot_components(forecast)
-    st.write(fig2)
+    # Calculate the marker size based on the number of data points
+    num_data_points = len(forecast)
+    marker_size = max(4, 1000 // num_data_points)  # Adjust the factor as needed
+
+    fig1.update_traces(marker=dict(size=marker_size))
+    fig1.update_layout(
+        title_text=f'Forecast Plot for {n_years} Years',
+        xaxis_rangeslider_visible=True,
+        height=600,  # Set the desired height for the forecast plot
+        width=900  # Set the desired width for the forecast plot
+    )
+    st.plotly_chart(fig1)
 
 footer = """
 <style>
