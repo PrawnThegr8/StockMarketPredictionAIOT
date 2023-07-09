@@ -6,7 +6,7 @@ from prophet.plot import plot_plotly
 import plotly.graph_objs as go
 import pandas as pd
 
-START = "2021-01-01"
+START = "2010-01-01"  # Extend the historical data range
 TODAY = date.today().strftime("%Y-%m-%d")
 
 st.title('Stock Market Predictor')
@@ -66,10 +66,21 @@ if selected_stock:
     # Predict forecast with Prophet
     df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
 
-    m = Prophet(changepoint_prior_scale=0.1)  # Adjust the value as needed
+    m = Prophet(changepoint_prior_scale=0.05)  # Adjust the changepoint_prior_scale value as needed
+
+    # Add additional regressors if available
+    # m.add_regressor('regressor1')
+    # m.add_regressor('regressor2')
+    # ...
+
     m.fit(df_train)
 
     future = m.make_future_dataframe(periods=period, freq='D')
+
+    # Fine-tune seasonality parameters if needed
+    # m.add_seasonality(name='weekly', period=7, fourier_order=3, prior_scale=0.1)
+    # m.add_seasonality(name='yearly', period=365.25, fourier_order=10, prior_scale=0.1)
+
     forecast = m.predict(future)
 
     # Show and plot forecast
