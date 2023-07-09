@@ -38,7 +38,7 @@ if selected_stock:
     st.write(data.tail())
 
 # Apply rolling average and interpolation to the data
-rolling_window = st.slider('Rolling average of data(increase for smoother graph)', 1, 30)
+rolling_window = st.slider('Rolling average of data(increase for smoother graph)', 1, 50)
 if selected_stock:
     data['Close_rolling'] = data['Close'].rolling(rolling_window, min_periods=1).mean()
     data['Close_rolling'] = data['Close_rolling'].interpolate(method='linear')
