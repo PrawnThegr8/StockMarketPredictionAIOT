@@ -1,4 +1,4 @@
-yfinances
+yfinance==0.2.22
 streamlit
 datetime
 prophet
