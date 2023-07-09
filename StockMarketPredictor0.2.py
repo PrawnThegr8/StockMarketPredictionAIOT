@@ -84,8 +84,8 @@ footer = """
     left: 0;
     bottom:;
     width: 100%;
-
-    color: white;
+    background-color: white;
+    color: black;
     text-align: center;
 }
 </style>
