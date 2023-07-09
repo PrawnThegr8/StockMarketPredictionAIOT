@@ -66,7 +66,7 @@ if selected_stock:
     # Predict forecast with Prophet
     df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
 
-    m = Prophet(changepoint_prior_scale=0.05)  # Adjust the changepoint_prior_scale value as needed
+    m = Prophet(changepoint_prior_scale=0.5)  # Adjust the changepoint_prior_scale value as needed
 
     # Add additional regressors if available
     # m.add_regressor('regressor1')
