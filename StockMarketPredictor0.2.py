@@ -83,10 +83,13 @@ if selected_stock:
 
     # Show and plot forecast
 
-
-    st.subheader(f'Forecast Plot for {n_years} Years')
-    fig1 = plot_plotly(m, forecast)
-
+    if n_years == 1:
+        st.subheader(f'Forecast Plot for {n_years} Year')
+        fig1 = plot_plotly(m, forecast)
+    if n_years >= 1:
+        st.subheader(f'Forecast Plot for {n_years} Years')
+        fig1 = plot_plotly(m, forecast)
+    
     # Calculate the marker size based on the number of data points
     num_data_points = len(forecast)
     marker_size = max(4, 1000 // num_data_points)  # Adjust the factor as needed
