@@ -86,7 +86,7 @@ if selected_stock:
     if n_years == 1:
         st.subheader(f'Forecast Plot for {n_years} Year')
         fig1 = plot_plotly(m, forecast)
-    if n_years >= 1:
+    else:
         st.subheader(f'Forecast Plot for {n_years} Years')
         fig1 = plot_plotly(m, forecast)
     
