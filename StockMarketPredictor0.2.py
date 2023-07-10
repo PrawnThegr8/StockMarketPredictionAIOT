@@ -6,7 +6,7 @@ from prophet.plot import plot_plotly
 import plotly.graph_objs as go
 import pandas as pd
 
-START = "2010-01-01"  # Extend the historical data range
+START = "2021-01-01"  # Extend the historical data range
 TODAY = date.today().strftime("%Y-%m-%d")
 
 st.title('Stock Market Predictor')
