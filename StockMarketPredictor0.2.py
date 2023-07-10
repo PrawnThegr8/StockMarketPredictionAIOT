@@ -29,8 +29,6 @@ if selected_stock:
     data = load_data(selected_stock)
     data_load_state.text('Loading data... done!')
     
-    st.subheader('Raw data')
-    st.write(data.tail())
 
     # Apply exponential smoothing to the data
     smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
@@ -84,8 +82,7 @@ if selected_stock:
     forecast = m.predict(future)
 
     # Show and plot forecast
-    st.subheader('Forecast data')
-    st.write(forecast.tail())
+
 
     st.subheader(f'Forecast Plot for {n_years} Years')
     fig1 = plot_plotly(m, forecast)
