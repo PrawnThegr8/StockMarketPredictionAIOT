@@ -52,7 +52,7 @@ if selected_stock:
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close'], name="Stock Close"))
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close_rolling'], name="Close (Exponential Smoothing)"))
         fig.update_layout(
-            title_text='Time Series Data',
+            title_text='Stock History',
             xaxis_rangeslider_visible=True,
             height=600,  # Set the desired height for the raw data plot
             width=900  # Set the desired width for the raw data plot
