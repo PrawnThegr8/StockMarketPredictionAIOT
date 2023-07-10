@@ -6,13 +6,16 @@ from prophet.plot import plot_plotly
 import plotly.graph_objs as go
 import pandas as pd
 
-START = "2021-01-01"  # Extend the historical data range
 TODAY = date.today().strftime("%Y-%m-%d")
 
 st.title('Stock Market Predictor')
 
-stocks = ('GOOG', 'AAPL', 'MSFT', 'GME', 'AMZN', 'RELIANCE.NS')
-selected_stock = st.text_input('Select a stock ticker for prediction (refer YAHOO FINANCE for tickers)')
+# Use selectbox for stock selection
+selected_stock = st.text_input('Select a stock ticker for prediction (refer to yfinance for ticker)')
+
+start_year = st.slider('Select the start year for prediction', 2010, date.today().year - 1, 2020)
+
+start_date = date(start_year, 1, 1).strftime("%Y-%m-%d")
 
 n_years = st.slider('How many years into the future?', 1, 4)
 period = n_years * 365
@@ -20,7 +23,7 @@ period = n_years * 365
 @st.cache_data
 def load_data(ticker):
     if selected_stock:
-        data = yf.download(ticker, START, TODAY)
+        data = yf.download(ticker, start_date, TODAY)
         data.reset_index(inplace=True)
         return data
 
@@ -29,9 +32,9 @@ if selected_stock:
     data = load_data(selected_stock)
     data_load_state.text('Loading data... done!')
     
-
     # Apply exponential smoothing to the data
     smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
+    changepoint_prior_scale = st.slider('Flexibility of Trend', 0.1, 10.0, 0.5, 0.1, format="%.1f")
 
     # Convert 'Date' column to datetime format
     data['Date'] = pd.to_datetime(data['Date'])
@@ -64,7 +67,10 @@ if selected_stock:
     # Predict forecast with Prophet
     df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
 
-    m = Prophet(changepoint_prior_scale=0.5)  # Adjust the changepoint_prior_scale value as needed
+    m = Prophet(
+        growth='linear',
+        changepoint_prior_scale=changepoint_prior_scale
+    )
 
     # Add additional regressors if available
     # m.add_regressor('regressor1')
