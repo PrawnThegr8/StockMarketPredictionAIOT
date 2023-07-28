@@ -151,6 +151,11 @@ footer = """
     text-align: center;
 }
 </style>
+</style>
 <div class="footer">
     <p>Coded by Pranav, Ideas by Emil</p>
-    <p>This app is made for educational purposes only. Data it provides is not 
+    <p>This app is made for educational purposes only. Data it provides is not 100% accurate.</p>
+    <p>Analyze stocks before investing.</p>
+</div>
+"""
+st.markdown(footer, unsafe_allow_html=True)
