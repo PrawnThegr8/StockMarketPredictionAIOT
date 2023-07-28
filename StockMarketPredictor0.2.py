@@ -17,6 +17,11 @@ NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API 
 
 st.title('Stock Market Predictor')
 
+# Custom caching function based on the selected stock
+@st.cache(hash_funcs={dict: lambda _: None})
+def custom_cache(func, *args, **kwargs):
+    return func(*args, **kwargs)
+
 # Get the list of all available tickers and their corresponding long names
 all_tickers_dict = yf.Tickers(list(yf.Tickers().tickers.keys())).tickers
 all_tickers = list(all_tickers_dict.keys())
@@ -32,12 +37,14 @@ period = n_years * 365
 
 daily_data = None  # Initialize daily_data here
 
+@custom_cache
 def load_data(ticker):
     if selected_stock:
         data = yf.download(ticker, start_date, TODAY)
         data.reset_index(inplace=True)
         return data, all_tickers_dict
 
+@custom_cache
 def get_news(stock):
     if NEWS_API_KEY:
         # Include the company name along with the stock ticker in the search query
@@ -52,6 +59,7 @@ def get_news(stock):
 # Custom word lists for positive and negative sentiment
 positive_words = ['good', 'excellent', 'positive', 'improve', 'success', 'up', 'gain', 'bullish', 'happy', 'prosper', 'opportunity']
 negative_words = ['bad', 'poor', 'negative', 'decline', 'failure', 'down', 'loss', 'bearish', 'sad', 'danger', 'risk']
+
 
 def analyze_sentiment(text):
     blob = TextBlob(text.lower())
@@ -155,7 +163,7 @@ if selected_stock:
     fig1.update_layout(
         title_text=f'Forecast Plot for {n_years} Years',
         xaxis_rangeslider
-        title_text=f'Forecast Plot for {n_years} Years',
+
         xaxis_rangeslider_visible=True,
         height=600,
         width=900,
