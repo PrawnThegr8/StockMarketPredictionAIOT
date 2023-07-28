@@ -32,7 +32,6 @@ period = n_years * 365
 
 daily_data = None  # Initialize daily_data here
 
-@st.cache_data
 def load_data(ticker):
     if selected_stock:
         data = yf.download(ticker, start_date, TODAY)
