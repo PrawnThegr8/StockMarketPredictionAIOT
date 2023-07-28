@@ -7,3 +7,4 @@ scikit-learn
 tensorflow==2.13.0
 transformers
 textblob
+nltk
