@@ -68,7 +68,29 @@ if selected_stock:
     data = load_data(selected_stock)
     data_load_state.text('Loading data... done!')
 
-    # ... (rest of the code remains the same)
+    smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
+    changepoint_prior_scale = st.slider('Flexibility of Trend', 0.1, 10.0, 0.5, 0.1, format="%.1f")
+
+    # Daily data for exponential smoothing
+    data['Date'] = pd.to_datetime(data['Date'])
+    data.set_index('Date', inplace=True)
+    daily_data = data.resample('D').interpolate()
+    daily_data['Close_rolling'] = daily_data['Close'].ewm(alpha=1 - smoothing_factor).mean()
+
+    def plot_raw_data():
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Open'], name="Stock Open"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close'], name="Stock Close"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close_rolling'], name="Close (Exponential Smoothing)"))
+        fig.update_layout(
+            title_text='Stock History',
+            xaxis_rangeslider_visible=True,
+            height=600,
+            width=900
+        )
+        st.plotly_chart(fig)
+
+    plot_raw_data()
 
     news_data = get_news(selected_stock)
 
@@ -83,11 +105,13 @@ if selected_stock:
                 st.write(f"**Source:** {article['source']['name']}")
                 st.write(f"**Published At:** {article['publishedAt']}")
                 st.write(f"**URL:** {article['url']}")
-                st.write('---')
 
                 sentiment_score = analyze_sentiment(article['description'])
 
                 # Adjust sensitivity by multiplying with a weight
+                weight = 10  # Experiment with different values here for sensitivity
+                sentiment_score
+ # Adjust sensitivity by multiplying with a weight
                 weight = 10  # Experiment with different values here for sensitivity
                 sentiment_score *= weight
 
@@ -99,8 +123,6 @@ if selected_stock:
         st.subheader("Overall Sentiment: Negative")
     else:
         st.subheader("Overall Sentiment: Neutral")
-
-    # ... (rest of the code remains the same)
 
     df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
 
@@ -145,7 +167,6 @@ if selected_stock:
     )
 
     st.plotly_chart(fig1)
-
 
 footer = """
 <style>
