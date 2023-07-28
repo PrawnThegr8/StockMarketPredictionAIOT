@@ -4,4 +4,3 @@ datetime
 prophet
 plotly
 scikit-learn
-sklearn
