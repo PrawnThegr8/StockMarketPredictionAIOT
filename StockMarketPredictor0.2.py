@@ -33,10 +33,15 @@ def load_data(ticker):
 @st.cache_data
 def get_news(stock):
     if NEWS_API_KEY:
-        url = f'https://newsapi.org/v2/everything?q={stock}&apiKey={NEWS_API_KEY}&pageSize=5'
+        # Include the company name along with the stock ticker in the search query
+        company_name = yf.Ticker(stock).info['longName']
+        search_query = f'{stock} OR {company_name}'
+        
+        url = f'https://newsapi.org/v2/everything?q={search_query}&apiKey={NEWS_API_KEY}&pageSize=5'
         response = requests.get(url)
         news_data = response.json()
         return news_data
+
 
 def get_sentiment_analysis(text):
     sentiment_analyzer = pipeline(task='sentiment-analysis', model='distilbert-base-uncased')
