@@ -34,7 +34,7 @@ if selected_stock:
     
     # Apply exponential smoothing to the data
     smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
-    changepoint_prior_scale = st.slider('Flexibility of Trend', 0.01, 1.0, 0.05, 0.01, format="%.1f")
+    changepoint_prior_scale = st.slider('Flexibility of Trend', 0.1, 10.0, 0.5, 0.1, format="%.1f")
 
     # Convert 'Date' column to datetime format
     data['Date'] = pd.to_datetime(data['Date'])
