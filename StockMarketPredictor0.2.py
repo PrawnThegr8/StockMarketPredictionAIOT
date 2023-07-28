@@ -108,7 +108,7 @@ if selected_stock:
                     overall_sentiment_score += sentiment_score
 
     # Adjust sensitivity by multiplying with a weight
-    weight = 300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 # Experiment with different values here for super sensitivity
+    weight = 100 # Experiment with different values here for super sensitivity
     overall_sentiment_score *= weight
 
     if overall_sentiment_score > 0:
