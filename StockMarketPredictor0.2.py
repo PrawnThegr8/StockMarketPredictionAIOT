@@ -60,6 +60,9 @@ def get_news(stock):
 positive_words = ['good', 'excellent', 'positive', 'improve', 'success', 'up', 'gain', 'bullish', 'happy', 'prosper', 'opportunity']
 negative_words = ['bad', 'poor', 'negative', 'decline', 'failure', 'down', 'loss', 'bearish', 'sad', 'danger', 'risk']
 
+# Rest of the code (unchanged)
+# ...
+
 
 def analyze_sentiment(text):
     blob = TextBlob(text.lower())
