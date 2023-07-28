@@ -88,25 +88,38 @@ if selected_stock:
     forecast = m.predict(future)
 
     # Show and plot forecast
-
     if n_years == 1:
         st.subheader(f'Forecast Plot for {n_years} Year')
-        fig1 = plot_plotly(m, forecast)
     else:
         st.subheader(f'Forecast Plot for {n_years} Years')
-        fig1 = plot_plotly(m, forecast)
-    
+
+    fig1 = plot_plotly(m, forecast)
+
+    # Customize the forecast line appearance
+    fig1.update_traces(mode='lines', line=dict(color='blue', width=2), selector=dict(name='yhat'))
+
     # Calculate the marker size based on the number of data points
     num_data_points = len(forecast)
-    marker_size = max(4, 1000 // num_data_points)  # Adjust the factor as needed
+    marker_size = max(4, 200 // num_data_points)  # Adjust the factor as needed
 
-    fig1.update_traces(marker=dict(size=marker_size))
+    # Update the scatter trace to match the forecast more closely
+    fig1.update_traces(mode='markers+lines', marker=dict(size=marker_size, color='black', opacity=0.7),
+                       selector=dict(name='yhat_lower,yhat_upper'))
+
     fig1.update_layout(
         title_text=f'Forecast Plot for {n_years} Years',
         xaxis_rangeslider_visible=True,
         height=600,  # Set the desired height for the forecast plot
-        width=900  # Set the desired width for the forecast plot
+        width=900,  # Set the desired width for the forecast plot
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
+
     st.plotly_chart(fig1)
 
 footer = """
