@@ -57,8 +57,8 @@ if selected_stock:
     # Fill missing values in 'Daily_Return' using interpolation
     daily_data['Daily_Return'].interpolate(method='linear', inplace=True)
 
-    # Fill missing values in 'extra_regressor1' column with a specific value (e.g., 0)
-    daily_data['extra_regressor1'].fillna(0, inplace=True)
+    # Create 'extra_regressor1' column and fill missing values with a specific value (e.g., 0)
+    daily_data['extra_regressor1'] = daily_data['Daily_Return'].fillna(0)
 
     daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
     daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
