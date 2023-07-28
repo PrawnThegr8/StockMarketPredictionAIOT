@@ -90,8 +90,6 @@ if selected_stock:
             st.write(f"**Title:** {article['title']}")
             st.write(f"**Description:** {article['description']}")
             st.write(f"**Source:** {article['source']['name']}")
-            st.write(f"**Published At:** {article['publishedAt']}")
-            st.write(f"**URL:** {article['url']}")
             st.write('---')
 
             sentiment_score = get_sentiment_score(article['description'])
