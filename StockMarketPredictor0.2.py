@@ -27,6 +27,8 @@ start_date = date(start_year, 1, 1).strftime("%Y-%m-%d")
 n_years = st.slider('How many years into the future?', 1, 4)
 period = n_years * 365
 
+daily_data = None  # Initialize daily_data here
+
 @st.cache_data
 def load_data(ticker):
     if selected_stock:
@@ -109,9 +111,6 @@ if selected_stock:
                 sentiment_score = analyze_sentiment(article['description'])
 
                 # Adjust sensitivity by multiplying with a weight
-                weight = 10  # Experiment with different values here for sensitivity
-                sentiment_score
- # Adjust sensitivity by multiplying with a weight
                 weight = 10  # Experiment with different values here for sensitivity
                 sentiment_score *= weight
 
