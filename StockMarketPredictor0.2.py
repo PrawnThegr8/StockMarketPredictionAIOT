@@ -99,7 +99,7 @@ if selected_stock:
 
                 sentiment_score = get_sentiment_score(article['description'])
 
-                # Super sensitivity: Assign a higher weight to positive and negative sentiments
+           
                 if sentiment_score > 0:
                     overall_sentiment_score += sentiment_score * 10
                 elif sentiment_score < 0:
@@ -108,7 +108,7 @@ if selected_stock:
                     overall_sentiment_score += sentiment_score
 
     # Adjust sensitivity by multiplying with a weight
-    weight = 50  # Experiment with different values here for super sensitivity
+    weight = 30000 # Experiment with different values here for super sensitivity
     overall_sentiment_score *= weight
 
     if overall_sentiment_score > 0:
