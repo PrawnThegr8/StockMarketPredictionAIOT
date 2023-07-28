@@ -10,7 +10,7 @@ import requests
 from transformers import pipeline
 
 TODAY = date.today().strftime("%Y-%m-%d")
-NEWS_API_KEY = 'YOUR_NEWS_API_KEY'  # Replace with your News API key
+NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API key
 
 st.title('Stock Market Predictor')
 
