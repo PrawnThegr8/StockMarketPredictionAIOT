@@ -69,66 +69,12 @@ if selected_stock:
 
     # Prepare additional features (e.g., daily returns, moving averages, etc.)
     daily_data['Daily_Return'] = daily_data['Close'].pct_change()
+
+    # Fill missing values in 'Daily_Return' using interpolation
+    daily_data['Daily_Return'].interpolate(method='linear', inplace=True)
+
     daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
     daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
-
-    # Predict forecast with Prophet
-    df_train = daily_data[['Close_rolling', 'Daily_Return', 'MA_50', 'MA_200']].reset_index().rename(
-        columns={"Date": "ds", "Close_rolling": "y", "Daily_Return": "extra_regressor1", "MA_50": "extra_regressor2",
-                 "MA_200": "extra_regressor3"})
-
-    m = Prophet(
-        growth='linear',
-        changepoint_prior_scale=changepoint_prior_scale
-    )
-
-    m.add_regressor('extra_regressor1')
-    m.add_regressor('extra_regressor2')
-    m.add_regressor('extra_regressor3')
-
-    m.fit(df_train)
-
-    future = m.make_future_dataframe(periods=period, freq='D')
-
-    forecast = m.predict(future)
-
-    # LSTM Model for Comparison
-    def create_sequences(data, seq_length):
-        X = []
-        y = []
-        for i in range(len(data) - seq_length):
-            X.append(data[i:i + seq_length])
-            y.append(data[i + seq_length])
-        return np.array(X), np.array(y)
-
-    sequence_length = 30
-    X, y = create_sequences(daily_data['Close'].values, sequence_length)
-
-    train_size = int(0.8 * len(X))
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
-
-    model = Sequential()
-    model.add(LSTM(units=64, input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mean_squared_error')
-
-    model.fit(X_train, y_train, epochs=50, batch_size=32, verbose=0)
-
-    train_predictions = model.predict(X_train)
-    test_predictions = model.predict(X_test)
-
-    # ... (Rest of the LSTM predictions and transformation back to original scale)
-
-    # Plot the LSTM predictions
-    fig_lstm = go.Figure()
-    fig_lstm.add_trace(go.Scatter(x=train_dates, y=y_train.flatten(), name='Train Actual', line=dict(color='blue')))
-    fig_lstm.add_trace(
-        go.Scatter(x=train_dates, y=train_predictions.flatten(), name='Train Predicted', line=dict(color='orange')))
-    fig_lstm.add_trace(go.Scatter(x=test_dates, y=y_test.flatten(), name='Test Actual', line=dict(color='green')))
-    fig_lstm.add_trace(go.Scatter(x=test_dates, y=test_predictions.flatten(), name='Test Predicted', line=dict(color='red')))
-    fig_lstm.update_layout(title_text='Stock Price Prediction with LSTM', xaxis_title='Date', yaxis_title='Stock Price')
-    st.plotly_chart(fig_lstm)
 
     # ... (Rest of the code remains the same)
 
