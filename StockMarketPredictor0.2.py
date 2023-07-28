@@ -83,8 +83,7 @@ if selected_stock:
     plot_raw_data()
 
     # Predict forecast with Prophet
-    df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
-
+    df_train = daily_data[['Close_rolling', 'extra_regressor1']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
     m = Prophet(
         growth='linear',
         changepoint_prior_scale=changepoint_prior_scale
@@ -97,6 +96,10 @@ if selected_stock:
     m.fit(df_train)
 
     future = m.make_future_dataframe(periods=period, freq='D')
+
+    # Fill missing values in 'extra_regressor1' for future dataframe
+    future['extra_regressor1'] = future['ds'].apply(lambda x: daily_data['extra_regressor1'].iloc[-1] if x < daily_data.index[-1] else np.nan)
+    future['extra_regressor1'].interpolate(method='linear', inplace=True)
 
     # Fine-tune seasonality parameters if needed
     # m.add_seasonality(name='weekly', period=7, fourier_order=3, prior_scale=0.1)
@@ -138,7 +141,6 @@ if selected_stock:
     )
 
     st.plotly_chart(fig1)
-
 # Footer
 footer = """
 <style>
