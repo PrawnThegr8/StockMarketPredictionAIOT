@@ -63,6 +63,25 @@ if selected_stock:
     daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
     daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
 
+    # Plot raw data with exponential smoothing
+    def plot_raw_data():
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Open'], name="Stock Open"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close'], name="Stock Close"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close_rolling'], name="Close (Exponential Smoothing)"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['MA_50'], name="MA_50"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['MA_200'], name="MA_200"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['extra_regressor1'], name="Extra Regressor 1"))
+        fig.update_layout(
+            title_text='Stock History',
+            xaxis_rangeslider_visible=True,
+            height=600,  # Set the desired height for the raw data plot
+            width=900  # Set the desired width for the raw data plot
+        )
+        st.plotly_chart(fig)
+
+    plot_raw_data()
+
     # ... (Rest of the code remains the same)
 
 # Footer
