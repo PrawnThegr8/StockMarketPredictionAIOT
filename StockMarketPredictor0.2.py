@@ -4,8 +4,6 @@ import yfinance as yf
 import numpy as np
 from prophet import Prophet
 from prophet.plot import plot_plotly
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
 import plotly.graph_objs as go
 import pandas as pd
 
@@ -51,18 +49,6 @@ if selected_stock:
     # Apply exponential smoothing to the data
     daily_data['Close_rolling'] = daily_data['Close'].ewm(alpha=1 - smoothing_factor).mean()
 
-    # Prepare additional features (e.g., daily returns, moving averages, etc.)
-    daily_data['Daily_Return'] = daily_data['Close'].pct_change()
-
-    # Fill missing values in 'Daily_Return' using interpolation
-    daily_data['Daily_Return'].interpolate(method='linear', inplace=True)
-
-    # Create 'extra_regressor1' column and fill missing values with a specific value (e.g., 0)
-    daily_data['extra_regressor1'] = daily_data['Daily_Return'].fillna(0)
-
-    daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
-    daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
-
     # Plot raw data with exponential smoothing and additional features
     def plot_raw_data():
         fig = go.Figure()
@@ -80,28 +66,16 @@ if selected_stock:
     plot_raw_data()
 
     # Predict forecast with Prophet
-    df_train = daily_data[['Close_rolling', 'extra_regressor1']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
+    df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
     m = Prophet(
         growth='linear',
-        changepoint_prior_scale=changepoint_prior_scale
+        changepoint_prior_scale=changepoint_prior_scale,
+        seasonality_mode='additive'  # Experiment with 'multiplicative' for seasonality
     )
-
-    # Add additional regressors if available
-    m.add_regressor('extra_regressor1')
-    # You can add more additional regressors here if needed
 
     m.fit(df_train)
 
     future = m.make_future_dataframe(periods=period, freq='D')
-
-    # Fill missing values in 'extra_regressor1' for future dataframe
-    future['extra_regressor1'] = future['ds'].apply(lambda x: daily_data['extra_regressor1'].iloc[-1] if x < daily_data.index[-1] else np.nan)
-    future['extra_regressor1'].interpolate(method='linear', inplace=True)
-
-    # Fine-tune seasonality parameters if needed
-    # m.add_seasonality(name='weekly', period=7, fourier_order=3, prior_scale=0.1)
-    # m.add_seasonality(name='yearly', period=365.25, fourier_order=10, prior_scale=0.1)
-
     forecast = m.predict(future)
 
     # Show and plot forecast
