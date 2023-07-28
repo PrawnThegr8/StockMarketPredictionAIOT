@@ -63,7 +63,7 @@ if selected_stock:
     daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
     daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
 
-    # Plot raw data with exponential smoothing
+    # Plot raw data with exponential smoothing and additional features
     def plot_raw_data():
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Open'], name="Stock Open"))
@@ -82,7 +82,62 @@ if selected_stock:
 
     plot_raw_data()
 
-    # ... (Rest of the code remains the same)
+    # Predict forecast with Prophet
+    df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
+
+    m = Prophet(
+        growth='linear',
+        changepoint_prior_scale=changepoint_prior_scale
+    )
+
+    # Add additional regressors if available
+    m.add_regressor('extra_regressor1')
+    # You can add more additional regressors here if needed
+
+    m.fit(df_train)
+
+    future = m.make_future_dataframe(periods=period, freq='D')
+
+    # Fine-tune seasonality parameters if needed
+    # m.add_seasonality(name='weekly', period=7, fourier_order=3, prior_scale=0.1)
+    # m.add_seasonality(name='yearly', period=365.25, fourier_order=10, prior_scale=0.1)
+
+    forecast = m.predict(future)
+
+    # Show and plot forecast
+    if n_years == 1:
+        st.subheader(f'Forecast Plot for {n_years} Year')
+    else:
+        st.subheader(f'Forecast Plot for {n_years} Years')
+
+    fig1 = plot_plotly(m, forecast)
+
+    # Customize the forecast line appearance
+    fig1.update_traces(mode='lines', line=dict(color='blue', width=2), selector=dict(name='yhat'))
+
+    # Calculate the marker size based on the number of data points
+    num_data_points = len(forecast)
+    marker_size = max(4, 200 // num_data_points)  # Adjust the factor as needed
+
+    # Update the scatter trace to match the forecast more closely
+    fig1.update_traces(mode='markers+lines', marker=dict(size=marker_size, color='black', opacity=0.7),
+                       selector=dict(name='yhat_lower,yhat_upper'))
+
+    fig1.update_layout(
+        title_text=f'Forecast Plot for {n_years} Years',
+        xaxis_rangeslider_visible=True,
+        height=600,  # Set the desired height for the forecast plot
+        width=900,  # Set the desired width for the forecast plot
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
+    st.plotly_chart(fig1)
 
 # Footer
 footer = """
@@ -98,8 +153,4 @@ footer = """
 </style>
 <div class="footer">
     <p>Coded by Pranav, Ideas by Emil</p>
-    <p>This app is made for educational purposes only. Data it provides is not 100% accurate.</p>
-    <p>Analyze stocks before investing.</p>
-</div>
-"""
-st.markdown(footer, unsafe_allow_html=True)
+    <p>This app is made for educational purposes only. Data it provides is not 
