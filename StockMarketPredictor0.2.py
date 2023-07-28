@@ -1,9 +1,8 @@
 import streamlit as st
 from datetime import date
 import yfinance as yf
-import numpy as np
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from prophet import Prophet
+from prophet.plot import plot_plotly
 import plotly.graph_objs as go
 import pandas as pd
 
@@ -33,70 +32,111 @@ if selected_stock:
     data = load_data(selected_stock)
     data_load_state.text('Loading data... done!')
     
+    # Apply exponential smoothing to the data
+    smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
+    changepoint_prior_scale = st.slider('Flexibility of Trend', 0.1, 10.0, 0.5, 0.1, format="%.1f")
+
     # Convert 'Date' column to datetime format
     data['Date'] = pd.to_datetime(data['Date'])
 
     # Set 'Date' column as index
     data.set_index('Date', inplace=True)
 
-    # Resample the data to daily frequency and fill missing values with the previous day's price
-    data_daily = data.resample('D').ffill()
+    # Resample the data to daily frequency
+    daily_data = data.resample('D').interpolate()
 
-    # Use 'Close' price for prediction
-    prices = data_daily['Close'].values.reshape(-1, 1)
+    # Apply exponential smoothing to the data
+    daily_data['Close_rolling'] = daily_data['Close'].ewm(alpha=1 - smoothing_factor).mean()
 
-    # Normalize the data manually
-    max_price = data_daily['Close'].max()
-    min_price = data_daily['Close'].min()
-    scaled_prices = (prices - min_price) / (max_price - min_price)
+    # Plot raw data with exponential smoothing
+    def plot_raw_data():
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Open'], name="Stock Open"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close'], name="Stock Close"))
+        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close_rolling'], name="Close (Exponential Smoothing)"))
+        fig.update_layout(
+            title_text='Stock History',
+            xaxis_rangeslider_visible=True,
+            height=600,  # Set the desired height for the raw data plot
+            width=900  # Set the desired width for the raw data plot
+        )
+        st.plotly_chart(fig)
 
-    # Create sequences for LSTM training
-    def create_sequences(data, seq_length):
-        X = []
-        y = []
-        for i in range(len(data) - seq_length):
-            X.append(data[i:i+seq_length])
-            y.append(data[i+seq_length])
-        return np.array(X), np.array(y)
+    plot_raw_data()
 
-    sequence_length = 30  # Experiment with different sequence lengths
-    X, y = create_sequences(scaled_prices, sequence_length)
+    # Predict forecast with Prophet
+    df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
 
-    # Split data into training and testing sets
-    train_size = int(0.8 * len(X))
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
+    m = Prophet(
+        growth='linear',
+        changepoint_prior_scale=changepoint_prior_scale
+    )
 
-    # Define the LSTM model
-    model = Sequential()
-    model.add(LSTM(units=64, input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    # Add additional regressors if available
+    # m.add_regressor('regressor1')
+    # m.add_regressor('regressor2')
+    # ...
 
-    # Train the model
-    model.fit(X_train, y_train, epochs=50, batch_size=32, verbose=0)
+    m.fit(df_train)
 
-    # Make predictions
-    train_predictions = model.predict(X_train)
-    test_predictions = model.predict(X_test)
+    future = m.make_future_dataframe(periods=period, freq='D')
 
-    # Transform the predictions back to the original scale
-    train_predictions = train_predictions * (max_price - min_price) + min_price
-    y_train = y_train * (max_price - min_price) + min_price
-    test_predictions = test_predictions * (max_price - min_price) + min_price
-    y_test = y_test * (max_price - min_price) + min_price
+    # Fine-tune seasonality parameters if needed
+    # m.add_seasonality(name='weekly', period=7, fourier_order=3, prior_scale=0.1)
+    # m.add_seasonality(name='yearly', period=365.25, fourier_order=10, prior_scale=0.1)
 
-    # Create a DataFrame for plotting
-    train_dates = data_daily.index[sequence_length:train_size + sequence_length]
-    test_dates = data_daily.index[train_size + sequence_length:]
-    train_data = pd.DataFrame({'Date': train_dates, 'Actual': y_train.flatten(), 'Predicted': train_predictions.flatten()})
-    test_data = pd.DataFrame({'Date': test_dates, 'Actual': y_test.flatten(), 'Predicted': test_predictions.flatten()})
+    forecast = m.predict(future)
 
-    # Plot the predictions
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=train_data['Date'], y=train_data['Actual'], name='Train Actual', line=dict(color='blue')))
-    fig.add_trace(go.Scatter(x=train_data['Date'], y=train_data['Predicted'], name='Train Predicted', line=dict(color='orange')))
-    fig.add_trace(go.Scatter(x=test_data['Date'], y=test_data['Actual'], name='Test Actual', line=dict(color='green')))
-    fig.add_trace(go.Scatter(x=test_data['Date'], y=test_data['Predicted'], name='Test Predicted', line=dict(color='red')))
-    fig.update_layout(title_text='Stock Price Prediction with LSTM', xaxis_title='Date', yaxis_title='Stock Price')
-    st.plotly_chart(fig)
+    # Show and plot forecast
+    if n_years == 1:
+        st.subheader(f'Forecast Plot for {n_years} Year')
+    else:
+        st.subheader(f'Forecast Plot for {n_years} Years')
+
+    fig1 = plot_plotly(m, forecast)
+
+    # Customize the forecast line appearance
+    fig1.update_traces(mode='lines', line=dict(color='blue', width=2), selector=dict(name='yhat'))
+
+    # Calculate the marker size based on the number of data points
+    num_data_points = len(forecast)
+    marker_size = max(4, 200 // num_data_points)  # Adjust the factor as needed
+
+    # Update the scatter trace to match the forecast more closely
+    fig1.update_traces(mode='markers+lines', marker=dict(size=marker_size, color='black', opacity=0.7),
+                       selector=dict(name='yhat_lower,yhat_upper'))
+
+    fig1.update_layout(
+        title_text=f'Forecast Plot for {n_years} Years',
+        xaxis_rangeslider_visible=True,
+        height=600,  # Set the desired height for the forecast plot
+        width=900,  # Set the desired width for the forecast plot
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
+    st.plotly_chart(fig1)
+
+footer = """
+<style>
+.footer {
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+    color: black;
+    text-align: center;
+}
+</style>
+<div class="footer">
+    <p>Coded by Pranav, Ideas by Emil</p>
+    <p>This app is made for educational purposes only. Data it provides is not 100% accurate.</p>
+    <p>Analyze stocks before investing.</p>
+</div>
+"""
+st.markdown(footer, unsafe_allow_html=True)
