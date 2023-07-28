@@ -1,8 +1,11 @@
 import streamlit as st
 from datetime import date
 import yfinance as yf
+import numpy as np
 from prophet import Prophet
 from prophet.plot import plot_plotly
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 import plotly.graph_objs as go
 import pandas as pd
 
@@ -64,64 +67,72 @@ if selected_stock:
 
     plot_raw_data()
 
+    # Prepare additional features (e.g., daily returns, moving averages, etc.)
+    daily_data['Daily_Return'] = daily_data['Close'].pct_change()
+    daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
+    daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
+
     # Predict forecast with Prophet
-    df_train = daily_data[['Close_rolling']].reset_index().rename(columns={"Date": "ds", "Close_rolling": "y"})
+    df_train = daily_data[['Close_rolling', 'Daily_Return', 'MA_50', 'MA_200']].reset_index().rename(
+        columns={"Date": "ds", "Close_rolling": "y", "Daily_Return": "extra_regressor1", "MA_50": "extra_regressor2",
+                 "MA_200": "extra_regressor3"})
 
     m = Prophet(
         growth='linear',
         changepoint_prior_scale=changepoint_prior_scale
     )
 
-    # Add additional regressors if available
-    # m.add_regressor('regressor1')
-    # m.add_regressor('regressor2')
-    # ...
+    m.add_regressor('extra_regressor1')
+    m.add_regressor('extra_regressor2')
+    m.add_regressor('extra_regressor3')
 
     m.fit(df_train)
 
     future = m.make_future_dataframe(periods=period, freq='D')
 
-    # Fine-tune seasonality parameters if needed
-    # m.add_seasonality(name='weekly', period=7, fourier_order=3, prior_scale=0.1)
-    # m.add_seasonality(name='yearly', period=365.25, fourier_order=10, prior_scale=0.1)
-
     forecast = m.predict(future)
 
-    # Show and plot forecast
-    if n_years == 1:
-        st.subheader(f'Forecast Plot for {n_years} Year')
-    else:
-        st.subheader(f'Forecast Plot for {n_years} Years')
+    # LSTM Model for Comparison
+    def create_sequences(data, seq_length):
+        X = []
+        y = []
+        for i in range(len(data) - seq_length):
+            X.append(data[i:i + seq_length])
+            y.append(data[i + seq_length])
+        return np.array(X), np.array(y)
 
-    fig1 = plot_plotly(m, forecast)
+    sequence_length = 30
+    X, y = create_sequences(daily_data['Close'].values, sequence_length)
 
-    # Customize the forecast line appearance
-    fig1.update_traces(mode='lines', line=dict(color='blue', width=2), selector=dict(name='yhat'))
+    train_size = int(0.8 * len(X))
+    X_train, X_test = X[:train_size], X[train_size:]
+    y_train, y_test = y[:train_size], y[train_size:]
 
-    # Calculate the marker size based on the number of data points
-    num_data_points = len(forecast)
-    marker_size = max(4, 200 // num_data_points)  # Adjust the factor as needed
+    model = Sequential()
+    model.add(LSTM(units=64, input_shape=(X_train.shape[1], X_train.shape[2])))
+    model.add(Dense(1))
+    model.compile(optimizer='adam', loss='mean_squared_error')
 
-    # Update the scatter trace to match the forecast more closely
-    fig1.update_traces(mode='markers+lines', marker=dict(size=marker_size, color='black', opacity=0.7),
-                       selector=dict(name='yhat_lower,yhat_upper'))
+    model.fit(X_train, y_train, epochs=50, batch_size=32, verbose=0)
 
-    fig1.update_layout(
-        title_text=f'Forecast Plot for {n_years} Years',
-        xaxis_rangeslider_visible=True,
-        height=600,  # Set the desired height for the forecast plot
-        width=900,  # Set the desired width for the forecast plot
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
-    )
+    train_predictions = model.predict(X_train)
+    test_predictions = model.predict(X_test)
 
-    st.plotly_chart(fig1)
+    # ... (Rest of the LSTM predictions and transformation back to original scale)
 
+    # Plot the LSTM predictions
+    fig_lstm = go.Figure()
+    fig_lstm.add_trace(go.Scatter(x=train_dates, y=y_train.flatten(), name='Train Actual', line=dict(color='blue')))
+    fig_lstm.add_trace(
+        go.Scatter(x=train_dates, y=train_predictions.flatten(), name='Train Predicted', line=dict(color='orange')))
+    fig_lstm.add_trace(go.Scatter(x=test_dates, y=y_test.flatten(), name='Test Actual', line=dict(color='green')))
+    fig_lstm.add_trace(go.Scatter(x=test_dates, y=test_predictions.flatten(), name='Test Predicted', line=dict(color='red')))
+    fig_lstm.update_layout(title_text='Stock Price Prediction with LSTM', xaxis_title='Date', yaxis_title='Stock Price')
+    st.plotly_chart(fig_lstm)
+
+    # ... (Rest of the code remains the same)
+
+# Footer
 footer = """
 <style>
 .footer {
