@@ -51,33 +51,17 @@ if selected_stock:
     # Apply exponential smoothing to the data
     daily_data['Close_rolling'] = daily_data['Close'].ewm(alpha=1 - smoothing_factor).mean()
 
-    # Plot raw data with exponential smoothing
-    def plot_raw_data():
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Open'], name="Stock Open"))
-        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close'], name="Stock Close"))
-        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close_rolling'], name="Close (Exponential Smoothing)"))
-        fig.update_layout(
-            title_text='Stock History',
-            xaxis_rangeslider_visible=True,
-            height=600,  # Set the desired height for the raw data plot
-            width=900  # Set the desired width for the raw data plot
-        )
-        st.plotly_chart(fig)
-
-    plot_raw_data()
-
     # Prepare additional features (e.g., daily returns, moving averages, etc.)
     daily_data['Daily_Return'] = daily_data['Close'].pct_change()
 
     # Fill missing values in 'Daily_Return' using interpolation
     daily_data['Daily_Return'].interpolate(method='linear', inplace=True)
 
+    # Fill missing values in 'extra_regressor1' column with a specific value (e.g., 0)
+    daily_data['extra_regressor1'].fillna(0, inplace=True)
+
     daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
     daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
-
-    # Update 'extra_regressor1' column with interpolated 'Daily_Return' values
-    daily_data['extra_regressor1'] = daily_data['Daily_Return']
 
     # ... (Rest of the code remains the same)
 
