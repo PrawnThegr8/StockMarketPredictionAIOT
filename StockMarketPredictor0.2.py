@@ -158,7 +158,7 @@ if selected_stock:
 
     fig1.update_traces(mode='markers+lines', marker=dict(size=marker_size, color='black', opacity=0.7),
                        selector=dict(name='yhat_lower,yhat_upper'))
-        fig1.update_layout(
+    fig1.update_layout(
         title_text=f'Forecast Plot for {n_years} Years',
         xaxis_rangeslider_visible=True,
         height=600,
