@@ -1,5 +1,4 @@
 import nltk
-
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 import streamlit as st
@@ -18,7 +17,11 @@ NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API 
 
 st.title('Stock Market Predictor')
 
-selected_stock = st.text_input('Select a stock ticker for prediction (refer to yfinance for ticker)')
+# Get the list of all available tickers and their corresponding long names
+all_tickers_dict = yf.Tickers().tickers
+all_tickers = list(all_tickers_dict.keys())
+
+selected_stock = st.selectbox('Select a stock ticker for prediction', all_tickers)
 
 start_year = st.slider('Select the start year for prediction', 2010, date.today().year - 1, 2020)
 
@@ -34,7 +37,7 @@ def load_data(ticker):
     if selected_stock:
         data = yf.download(ticker, start_date, TODAY)
         data.reset_index(inplace=True)
-        return data
+        return data, all_tickers_dict
 
 @st.cache_data
 def get_news(stock):
