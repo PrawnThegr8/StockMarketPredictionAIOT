@@ -87,16 +87,28 @@ if selected_stock:
     overall_sentiment_score = 0
     if 'articles' in news_data and len(news_data['articles']) > 0:
         for article in news_data['articles']:
-            st.write(f"**Title:** {article['title']}")
-            st.write(f"**Description:** {article['description']}")
-            st.write(f"**Source:** {article['source']['name']}")
-            st.write('---')
+            # Check if the description has a minimum word count to consider it relevant
+            min_word_count = 10  # Experiment with different values here
+            if len(article['description'].split()) >= min_word_count:
+                st.write(f"**Title:** {article['title']}")
+                st.write(f"**Description:** {article['description']}")
+                st.write(f"**Source:** {article['source']['name']}")
+                st.write(f"**Published At:** {article['publishedAt']}")
+                st.write(f"**URL:** {article['url']}")
+                st.write('---')
 
-            sentiment_score = get_sentiment_score(article['description'])
-            overall_sentiment_score += sentiment_score
+                sentiment_score = get_sentiment_score(article['description'])
+
+                # Super sensitivity: Assign a higher weight to positive and negative sentiments
+                if sentiment_score > 0:
+                    overall_sentiment_score += sentiment_score * 10
+                elif sentiment_score < 0:
+                    overall_sentiment_score += sentiment_score * 10
+                else:
+                    overall_sentiment_score += sentiment_score
 
     # Adjust sensitivity by multiplying with a weight
-    weight = 4
+    weight = 50  # Experiment with different values here for super sensitivity
     overall_sentiment_score *= weight
 
     if overall_sentiment_score > 0:
