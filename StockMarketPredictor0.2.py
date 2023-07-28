@@ -38,11 +38,10 @@ def load_data(ticker):
         data.reset_index(inplace=True)
         return data, all_tickers_dict
 
-@st.cache_data
 def get_news(stock):
     if NEWS_API_KEY:
         # Include the company name along with the stock ticker in the search query
-        company_name = yf.Ticker(stock).info['longName']
+        company_name = all_tickers_dict[stock]  # Use the selected ticker from the dropdown
         search_query = f'{stock} OR {company_name}'
         
         url = f'https://newsapi.org/v2/everything?q={search_query}&apiKey={NEWS_API_KEY}&pageSize=5'
@@ -67,9 +66,11 @@ def analyze_sentiment(text):
 
     return sentiment_score
 
+data, all_tickers_dict = load_data(selected_stock)  # Load data here
+news_data = get_news(selected_stock)  # Get news data here
+
 if selected_stock:
     data_load_state = st.text('Loading data...')
-    data = load_data(selected_stock)
     data_load_state.text('Loading data... done!')
 
     smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
@@ -95,8 +96,6 @@ if selected_stock:
         st.plotly_chart(fig)
 
     plot_raw_data()
-
-    news_data = get_news(selected_stock)
 
     overall_sentiment_score = 0
     if 'articles' in news_data and len(news_data['articles']) > 0:
@@ -154,6 +153,8 @@ if selected_stock:
                        selector=dict(name='yhat_lower,yhat_upper'))
 
     fig1.update_layout(
+        title_text=f'Forecast Plot for {n_years} Years',
+        xaxis_rangeslider
         title_text=f'Forecast Plot for {n_years} Years',
         xaxis_rangeslider_visible=True,
         height=600,
