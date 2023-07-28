@@ -69,9 +69,6 @@ if selected_stock:
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Open'], name="Stock Open"))
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close'], name="Stock Close"))
         fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['Close_rolling'], name="Close (Exponential Smoothing)"))
-        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['MA_50'], name="MA_50"))
-        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['MA_200'], name="MA_200"))
-        fig.add_trace(go.Scatter(x=daily_data.index, y=daily_data['extra_regressor1'], name="Extra Regressor 1"))
         fig.update_layout(
             title_text='Stock History',
             xaxis_rangeslider_visible=True,
@@ -141,6 +138,7 @@ if selected_stock:
     )
 
     st.plotly_chart(fig1)
+
 # Footer
 footer = """
 <style>
@@ -152,7 +150,6 @@ footer = """
     color: black;
     text-align: center;
 }
-</style>
 </style>
 <div class="footer">
     <p>Coded by Pranav, Ideas by Emil</p>
