@@ -18,7 +18,7 @@ NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API 
 st.title('Stock Market Predictor')
 
 # Get the list of all available tickers and their corresponding long names
-all_tickers_dict = yf.Tickers().tickers
+all_tickers_dict = yf.Tickers(list(yf.Tickers().tickers.keys())).tickers
 all_tickers = list(all_tickers_dict.keys())
 
 selected_stock = st.selectbox('Select a stock ticker for prediction', all_tickers)
