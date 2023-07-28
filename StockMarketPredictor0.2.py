@@ -76,6 +76,9 @@ if selected_stock:
     daily_data['MA_50'] = daily_data['Close'].rolling(window=50).mean()
     daily_data['MA_200'] = daily_data['Close'].rolling(window=200).mean()
 
+    # Update 'extra_regressor1' column with interpolated 'Daily_Return' values
+    daily_data['extra_regressor1'] = daily_data['Daily_Return']
+
     # ... (Rest of the code remains the same)
 
 # Footer
