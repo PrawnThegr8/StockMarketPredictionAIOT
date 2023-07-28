@@ -42,11 +42,17 @@ def get_news(stock):
         news_data = response.json()
         return news_data
 
-
-def get_sentiment_analysis(text):
+def get_sentiment_score(text):
     sentiment_analyzer = pipeline(task='sentiment-analysis', model='distilbert-base-uncased')
     result = sentiment_analyzer(text)
-    return result[0]['label']
+    sentiment_label = result[0]['label']
+    
+    if sentiment_label == 'POSITIVE':
+        return 1
+    elif sentiment_label == 'NEGATIVE':
+        return -1
+    else:
+        return 0
 
 if selected_stock:
     data_load_state = st.text('Loading data...')
@@ -78,7 +84,7 @@ if selected_stock:
 
     news_data = get_news(selected_stock)
 
-    overall_sentiment = 0
+    overall_sentiment_score = 0
     if 'articles' in news_data and len(news_data['articles']) > 0:
         for article in news_data['articles']:
             st.write(f"**Title:** {article['title']}")
@@ -88,15 +94,16 @@ if selected_stock:
             st.write(f"**URL:** {article['url']}")
             st.write('---')
 
-            sentiment = get_sentiment_analysis(article['description'])
-            if sentiment == 'POSITIVE':
-                overall_sentiment += 1
-            elif sentiment == 'NEGATIVE':
-                overall_sentiment -= 1
+            sentiment_score = get_sentiment_score(article['description'])
+            overall_sentiment_score += sentiment_score
 
-    if overall_sentiment > 0:
+    # Adjust sensitivity by multiplying with a weight
+    weight = 2  # You can experiment with different weights here
+    overall_sentiment_score *= weight
+
+    if overall_sentiment_score > 0:
         st.subheader("Overall Sentiment: Positive")
-    elif overall_sentiment < 0:
+    elif overall_sentiment_score < 0:
         st.subheader("Overall Sentiment: Negative")
     else:
         st.subheader("Overall Sentiment: Neutral")
