@@ -1,4 +1,5 @@
 import nltk
+
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 import streamlit as st
@@ -17,16 +18,7 @@ NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API 
 
 st.title('Stock Market Predictor')
 
-# Custom caching function based on the selected stock
-@st.cache(hash_funcs={dict: lambda _: None})
-def custom_cache(func, *args, **kwargs):
-    return func(*args, **kwargs)
-
-# Get the list of all available tickers and their corresponding long names
-all_tickers_dict = yf.Tickers(list(yf.Tickers().tickers.keys())).tickers
-all_tickers = list(all_tickers_dict.keys())
-
-selected_stock = st.selectbox('Select a stock ticker for prediction', all_tickers)
+selected_stock = st.text_input('Select a stock ticker for prediction (refer to yfinance for ticker)')
 
 start_year = st.slider('Select the start year for prediction', 2010, date.today().year - 1, 2020)
 
@@ -37,18 +29,18 @@ period = n_years * 365
 
 daily_data = None  # Initialize daily_data here
 
-@custom_cache
+@st.cache_data
 def load_data(ticker):
     if selected_stock:
         data = yf.download(ticker, start_date, TODAY)
         data.reset_index(inplace=True)
-        return data, all_tickers_dict
+        return data
 
-@custom_cache
+@st.cache_data
 def get_news(stock):
     if NEWS_API_KEY:
         # Include the company name along with the stock ticker in the search query
-        company_name = all_tickers_dict[stock]  # Use the selected ticker from the dropdown
+        company_name = yf.Ticker(stock).info['longName']
         search_query = f'{stock} OR {company_name}'
         
         url = f'https://newsapi.org/v2/everything?q={search_query}&apiKey={NEWS_API_KEY}&pageSize=5'
@@ -73,11 +65,9 @@ def analyze_sentiment(text):
 
     return sentiment_score
 
-data, all_tickers_dict = load_data(selected_stock)  # Load data here
-news_data = get_news(selected_stock)  # Get news data here
-
 if selected_stock:
     data_load_state = st.text('Loading data...')
+    data = load_data(selected_stock)
     data_load_state.text('Loading data... done!')
 
     smoothing_factor = st.slider('Smoothing Factor (increase for smoother graph)', 0.1, 0.95, 0.9, 0.05)
@@ -103,6 +93,8 @@ if selected_stock:
         st.plotly_chart(fig)
 
     plot_raw_data()
+
+    news_data = get_news(selected_stock)
 
     overall_sentiment_score = 0
     if 'articles' in news_data and len(news_data['articles']) > 0:
@@ -158,6 +150,7 @@ if selected_stock:
 
     fig1.update_traces(mode='markers+lines', marker=dict(size=marker_size, color='black', opacity=0.7),
                        selector=dict(name='yhat_lower,yhat_upper'))
+
     fig1.update_layout(
         title_text=f'Forecast Plot for {n_years} Years',
         xaxis_rangeslider_visible=True,
