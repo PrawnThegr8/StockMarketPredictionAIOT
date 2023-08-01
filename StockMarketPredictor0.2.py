@@ -1,7 +1,7 @@
 import nltk
-
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
+
 import streamlit as st
 from datetime import date
 import yfinance as yf
@@ -16,7 +16,19 @@ from textblob import TextBlob
 TODAY = date.today().strftime("%Y-%m-%d")
 NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API key
 
-# Function to load historical stock data
+st.title('Stock Market Predictor')
+
+selected_stock = st.text_input('Select a stock ticker for prediction (refer to yfinance for ticker)')
+
+start_year = st.slider('Select the start year for prediction', 2010, date.today().year - 1, 2020)
+
+start_date = date(start_year, 1, 1).strftime("%Y-%m-%d")
+
+n_years = st.slider('How many years into the future?', 1, 4)
+period = n_years * 365
+
+daily_data = None  # Initialize daily_data here
+
 @st.cache
 def load_data(ticker):
     if selected_stock:
@@ -24,7 +36,6 @@ def load_data(ticker):
         data.reset_index(inplace=True)
         return data
 
-# Function to retrieve news articles
 @st.cache
 def get_news(stock):
     if NEWS_API_KEY:
