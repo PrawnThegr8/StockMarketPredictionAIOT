@@ -17,7 +17,7 @@ TODAY = date.today().strftime("%Y-%m-%d")
 NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API key
 
 # Function to load historical stock data
-@st.cache_data
+@st.cache
 def load_data(ticker):
     if selected_stock:
         data = yf.download(ticker, start_date, TODAY)
@@ -25,7 +25,7 @@ def load_data(ticker):
         return data
 
 # Function to retrieve news articles
-@st.cache_data
+@st.cache
 def get_news(stock):
     if NEWS_API_KEY:
         # Include the company name along with the stock ticker in the search query
