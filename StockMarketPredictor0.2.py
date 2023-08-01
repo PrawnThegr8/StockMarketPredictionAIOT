@@ -102,10 +102,6 @@ if selected_stock:
             # Check if the description has a minimum word count to consider it relevant
             min_word_count = 10  # Experiment with different values here
             if len(article['description'].split()) >= min_word_count:
-                st.write(f"**Title:** {article['title']}")
-                st.write(f"**Description:** {article['description']}")
-                st.write(f"**Source:** {article['source']['name']}")
-                st.write(f"**Published At:** {article['publishedAt']}")
                 st.write(f"**URL:** {article['url']}")
 
                 sentiment_score = analyze_sentiment(article['description'])
