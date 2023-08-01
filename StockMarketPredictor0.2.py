@@ -15,7 +15,7 @@ from textblob import TextBlob
 
 TODAY = date.today().strftime("%Y-%m-%d")
 NEWS_API_KEY = 'd924dd3c445d430ba37bd28e3cd69e32'  # Replace with your News API key
-
+start_date= None
 def load_data(ticker):
     if ticker:
         data = yf.download(ticker, start_date, TODAY)
