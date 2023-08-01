@@ -175,7 +175,7 @@ footer = """
 }
 </style>
 <div class="footer">
-    <p>Coded by Pranav, Ideas by Emil</p>
+    <p>Developed by Pranav, Emil and Mantra</p>
     <p>This app is made for educational purposes only. Data it provides is not 100% accurate.</p>
     <p>Analyze stocks before investing.</p>
 </div>
